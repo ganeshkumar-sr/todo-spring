@@ -1,0 +1,68 @@
+---
+# Define a service to expose the application accessible by other services
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-service
+  labels:
+    app: todo-spring
+spec:
+  ports:
+    - nodePort: 30001 # allowed only between (30000 - 32767)
+      port: 8080
+      targetPort: 8088
+      protocol: TCP
+  selector:
+    app: todo-spring
+  type: NodePort
+    
+---
+
+ # Define deploment configs for todo app
+ 
+ apiVersion: apps/v1
+ kind: Deployment
+ metadata:
+  name: todo-app
+ spec:
+  selector:
+    matchLabels:
+      app: todo-spring
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: todo-spring
+    spec:
+      containers:
+        - name: todo-spring
+          image: todospring:2.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8088
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf
+                  key: host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf
+                  key: name
+            - name: POSTGRES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: postgres_password
+              
+                
+             
+                
+        
